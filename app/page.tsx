@@ -1,145 +1,106 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
 import { motion } from "motion/react";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-
-const STORAGE_KEY = "clickerCount";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import Leaderboard from "@/components/Leaderboard";
+import { useAnonymousSession } from "@/hooks/useAnonymousSession";
+import { registerClick } from "@/lib/clickBatcher";
+import { useSyncCounter } from "@/hooks/useSyncCounter";
 
 export default function Home() {
-  const [count, setCount] = useState(0);
-  const [clone, makeClone] = useState(0);
-  const isInitialMount = useRef(true);
+  const { userId, displayName, isAnonymous, isLoading } = useAnonymousSession({
+    city: "Brisbane",
+  });
+  // EXISTING CODE
+  const { count, updateCount, reset } = useSyncCounter();
 
-  // Load saved count from localStorage on mount
-  useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved !== null) {
-      const parsed = parseInt(saved, 10);
-      if (!Number.isNaN(parsed)) {
-        setCount(parsed);
-      }
+  if (isLoading) {
+    // render no additional UI while session bootstrap is in progress
+  }
+
+  // EXISTING CODE
+  void isAnonymous;
+
+  const increment = () => {
+    // EXISTING CODE
+    updateCount(count + 1);
+    if (userId !== null && !userId.startsWith("local-")) {
+      registerClick(userId);
     }
-  }, []);
-
-  // Save count to localStorage when it changes (skip initial mount)
-  useEffect(() => {
-    if (isInitialMount.current) {
-      isInitialMount.current = false;
-      return;
-    }
-    localStorage.setItem(STORAGE_KEY, String(count));
-  }, [count]);
-
-  const increment = () => setCount(count + 1);
-  const decrement = () => setCount(count - 1);
-  const reset = () => {
-    setCount(0);
-    localStorage.removeItem(STORAGE_KEY);
   };
-  const cloner = () => makeClone(count);
 
   return (
-    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6">
-      {/* Mesh gradient glow behind the counter */}
-      <div
-        className="absolute inset-0 overflow-hidden pointer-events-none"
-        aria-hidden
-      >
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] rounded-full bg-gradient-to-br from-indigo-500/40 via-violet-500/30 to-purple-600/40 blur-[120px] opacity-60" />
-        <div className="absolute top-1/3 right-1/4 w-[300px] h-[300px] rounded-full bg-violet-500/20 blur-[80px]" />
-        <div className="absolute bottom-1/3 left-1/4 w-[250px] h-[250px] rounded-full bg-indigo-500/20 blur-[70px]" />
+    <div className="relative min-h-screen overflow-hidden bg-slate-950 p-6 md:p-10">
+      <div className="absolute inset-0 pointer-events-none" aria-hidden>
+        <div className="absolute top-1/2 left-1/2 h-[540px] w-[920px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-to-br from-indigo-500/35 via-violet-500/25 to-purple-600/35 blur-[140px]" />
+        <div className="absolute top-16 right-10 h-[280px] w-[280px] rounded-full bg-indigo-500/20 blur-[95px]" />
+        <div className="absolute bottom-10 left-10 h-[260px] w-[260px] rounded-full bg-violet-500/20 blur-[90px]" />
       </div>
 
-      {/* Glassmorphism card container */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, ease: "easeOut" }}
-        className="relative z-10 w-full max-w-md"
-      >
-        <Card className="border-white/20 bg-white/[0.07] backdrop-blur-2xl shadow-2xl shadow-black/40">
-          <CardHeader className="text-center pb-2">
-            <CardTitle className="text-2xl font-bold bg-gradient-to-r from-indigo-400 via-violet-400 to-purple-400 bg-clip-text text-transparent">
-              I am clicker
-            </CardTitle>
-            <CardDescription className="text-slate-400">
-              Tap to count, clone to multiply
-            </CardDescription>
-          </CardHeader>
+      <div className="relative z-10 mx-auto grid min-h-[calc(100vh-3rem)] w-full max-w-6xl grid-cols-1 items-center gap-8 lg:grid-cols-2">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
+          className="w-full"
+        >
+          <Card className="border-white/20 bg-white/[0.07] backdrop-blur-2xl shadow-2xl shadow-black/40">
+            <CardHeader className="text-center pb-2">
+              <CardTitle className="text-2xl font-bold bg-gradient-to-r from-indigo-400 via-violet-400 to-purple-400 bg-clip-text text-transparent">
+                Brisbane Clicker
+              </CardTitle>
+            </CardHeader>
 
-          <CardContent className="flex flex-col items-center gap-6">
-            {/* Counter display with mesh glow and spring bounce */}
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-48 h-48 rounded-full bg-gradient-to-br from-indigo-500/20 via-violet-500/15 to-purple-600/20 blur-2xl" />
+            <CardContent className="flex flex-col items-center gap-6">
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="h-48 w-48 rounded-full bg-gradient-to-br from-indigo-500/20 via-violet-500/15 to-purple-600/20 blur-2xl" />
+                </div>
+                <motion.div
+                  key={count}
+                  initial={{ scale: 0.5, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 15 }}
+                  className="relative flex min-h-[120px] flex-col items-center justify-center"
+                >
+                  <span className="text-6xl font-bold tabular-nums bg-gradient-to-b from-white to-slate-300 bg-clip-text text-transparent drop-shadow-lg">
+                    {count}
+                  </span>
+                  <span className="mt-2 text-xs tracking-wide text-slate-400">
+                    Playing as {displayName ?? "Anonymous"}
+                  </span>
+                </motion.div>
               </div>
-              <motion.div
-                key={count}
-                initial={{ scale: 0.5, opacity: 0 }}
-                animate={{
-                  scale: 1,
-                  opacity: 1,
-                }}
-                transition={{
-                  type: "spring",
-                  stiffness: 400,
-                  damping: 15,
-                }}
-                className="relative flex flex-col items-center justify-center min-h-[120px]"
-              >
-                <span className="text-6xl font-bold tabular-nums bg-gradient-to-b from-white to-slate-300 bg-clip-text text-transparent drop-shadow-lg">
-                  {count}
-                </span>
-                {clone !== 0 && (
-                  <motion.span
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="mt-2 text-2xl font-mono text-violet-400/90"
-                  >
-                    {clone}
-                  </motion.span>
-                )}
-              </motion.div>
-            </div>
 
-            {/* Action buttons with scale-down on click */}
-            <div className="flex flex-wrap gap-3 justify-center">
-              <motion.div whileTap={{ scale: 0.92 }} whileHover={{ scale: 1.02 }}>
-                <Button onClick={increment} size="lg" className="min-w-[120px]">
-                  Increment
-                </Button>
-              </motion.div>
-              <motion.div whileTap={{ scale: 0.92 }} whileHover={{ scale: 1.02 }}>
-                <Button onClick={decrement} variant="outline" size="lg" className="min-w-[120px]">
-                  Decrement
-                </Button>
-              </motion.div>
-              <motion.div whileTap={{ scale: 0.92 }} whileHover={{ scale: 1.02 }}>
-                <Button onClick={cloner} variant="secondary" size="lg" className="min-w-[120px]">
-                  Clone
-                </Button>
-              </motion.div>
-            </div>
-          </CardContent>
+              <div className="flex justify-center">
+                <motion.div whileTap={{ scale: 0.92 }} whileHover={{ scale: 1.02 }}>
+                  <Button onClick={increment} size="lg" className="min-w-[140px]">
+                    Increment
+                  </Button>
+                </motion.div>
+              </div>
+            </CardContent>
 
-          <CardFooter className="justify-center pt-2 pb-6">
-            <motion.div whileTap={{ scale: 0.92 }} whileHover={{ scale: 1.02 }}>
-              <Button onClick={reset} variant="destructive" size="lg">
-                Reset
-              </Button>
-            </motion.div>
-          </CardFooter>
-        </Card>
-      </motion.div>
+            <CardFooter className="justify-center pt-2 pb-6">
+              <motion.div whileTap={{ scale: 0.92 }} whileHover={{ scale: 1.02 }}>
+                <Button onClick={reset} variant="destructive" size="lg">
+                  Reset
+                </Button>
+              </motion.div>
+            </CardFooter>
+          </Card>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.05, ease: "easeOut" }}
+          className="w-full"
+        >
+          <Leaderboard city="Brisbane" currentUserId={userId} />
+        </motion.div>
+      </div>
     </div>
   );
 }
