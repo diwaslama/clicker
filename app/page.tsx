@@ -3,6 +3,7 @@
 import { motion } from "motion/react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import ClaimAccount from "@/components/ClaimAccount";
 import Leaderboard from "@/components/Leaderboard";
 import { useAnonymousSession } from "@/hooks/useAnonymousSession";
 import { registerClick } from "@/lib/clickBatcher";
@@ -18,9 +19,6 @@ export default function Home() {
   if (isLoading) {
     // render no additional UI while session bootstrap is in progress
   }
-
-  // EXISTING CODE
-  void isAnonymous;
 
   const increment = () => {
     // EXISTING CODE
@@ -82,12 +80,13 @@ export default function Home() {
               </div>
             </CardContent>
 
-            <CardFooter className="justify-center pt-2 pb-6">
+            <CardFooter className="flex-col justify-center gap-3 pt-2 pb-6">
               <motion.div whileTap={{ scale: 0.92 }} whileHover={{ scale: 1.02 }}>
                 <Button onClick={reset} variant="destructive" size="lg">
                   Reset
                 </Button>
               </motion.div>
+              {isAnonymous === true && <ClaimAccount />}
             </CardFooter>
           </Card>
         </motion.div>
