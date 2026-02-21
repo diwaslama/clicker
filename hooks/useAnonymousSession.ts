@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 
 const STORAGE_KEY = "anon_user_id";
 const DISPLAY_NAME_KEY = "anon_display_name";
+const IS_ANONYMOUS_KEY = "is_anonymous";
 
 interface SessionData {
   userId: string;
@@ -35,6 +36,15 @@ function getStoredSession(): SessionData | null {
 function storeSession(userId: string, displayName: string): void {
   localStorage.setItem(STORAGE_KEY, userId);
   localStorage.setItem(DISPLAY_NAME_KEY, displayName);
+  localStorage.setItem(IS_ANONYMOUS_KEY, "true");
+}
+
+function getStoredIsAnonymous(): boolean {
+  if (typeof window === "undefined") return true;
+
+  const stored = localStorage.getItem(IS_ANONYMOUS_KEY);
+  if (stored === "false") return false;
+  return true;
 }
 
 async function createSession(displayName: string, city: string): Promise<SessionData> {
@@ -64,11 +74,13 @@ export interface UseAnonymousSessionResult {
   displayName: string | null;
   isAnonymous: boolean;
   isLoading: boolean;
+  markAsClaimed: () => void;
 }
 
 export function useAnonymousSession({ city }: UseAnonymousSessionOptions): UseAnonymousSessionResult {
   const [userId, setUserId] = useState<string | null>(null);
   const [displayName, setDisplayName] = useState<string | null>(null);
+  const [isAnonymous, setIsAnonymous] = useState<boolean>(true);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -77,6 +89,7 @@ export function useAnonymousSession({ city }: UseAnonymousSessionOptions): UseAn
     if (stored) {
       setUserId(stored.userId);
       setDisplayName(stored.displayName);
+      setIsAnonymous(getStoredIsAnonymous());
       setIsLoading(false);
       return;
     }
@@ -94,16 +107,23 @@ export function useAnonymousSession({ city }: UseAnonymousSessionOptions): UseAn
         storeSession(fallbackUserId, displayNameToUse);
         setUserId(fallbackUserId);
         setDisplayName(displayNameToUse);
+        setIsAnonymous(true);
       })
       .finally(() => {
         setIsLoading(false);
       });
   }, [city]);
 
+  const markAsClaimed = () => {
+    localStorage.setItem(IS_ANONYMOUS_KEY, "false");
+    setIsAnonymous(false);
+  };
+
   return {
     userId,
     displayName,
-    isAnonymous: true,
+    isAnonymous,
     isLoading,
+    markAsClaimed,
   };
 }

@@ -6,7 +6,11 @@ import styles from "./ClaimAccount.module.css";
 
 const STORAGE_KEY = "anon_user_id";
 
-export default function ClaimAccount() {
+interface ClaimAccountProps {
+  markAsClaimed: () => void;
+}
+
+export default function ClaimAccount({ markAsClaimed }: ClaimAccountProps) {
   const supabase = useMemo(() => createClient(), []);
   const [isOpen, setIsOpen] = useState(false);
   const [email, setEmail] = useState("");
@@ -54,7 +58,7 @@ export default function ClaimAccount() {
       return;
     }
 
-    localStorage.setItem(STORAGE_KEY, authUserId);
+    markAsClaimed();
     setSuccessMessage("✅ Score saved!");
     setIsLoading(false);
 

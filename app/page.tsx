@@ -1,20 +1,24 @@
 "use client";
 
+import { useState } from "react";
 import { motion } from "motion/react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import ClaimAccount from "@/components/ClaimAccount";
 import Leaderboard from "@/components/Leaderboard";
+import SetDisplayName from "@/components/SetDisplayName";
 import { useAnonymousSession } from "@/hooks/useAnonymousSession";
 import { registerClick } from "@/lib/clickBatcher";
 import { useSyncCounter } from "@/hooks/useSyncCounter";
 
 export default function Home() {
-  const { userId, displayName, isAnonymous, isLoading } = useAnonymousSession({
+  const { userId, displayName: hookDisplayName, isAnonymous, isLoading, markAsClaimed } = useAnonymousSession({
     city: "Brisbane",
   });
   // EXISTING CODE
   const { count, updateCount, reset } = useSyncCounter();
+  const [displayName, setDisplayName] = useState<string | null>(hookDisplayName);
+  const visibleDisplayName = displayName ?? hookDisplayName;
 
   if (isLoading) {
     // render no additional UI while session bootstrap is in progress
@@ -66,8 +70,15 @@ export default function Home() {
                     {count}
                   </span>
                   <span className="mt-2 text-xs tracking-wide text-slate-400">
-                    Playing as {displayName ?? "Anonymous"}
+                    Playing as {visibleDisplayName ?? "Anonymous"}
                   </span>
+                  {isAnonymous === false && (
+                    <SetDisplayName
+                      userId={userId}
+                      displayName={visibleDisplayName}
+                      onDisplayNameChange={setDisplayName}
+                    />
+                  )}
                 </motion.div>
               </div>
 
@@ -86,7 +97,7 @@ export default function Home() {
                   Reset
                 </Button>
               </motion.div>
-              {isAnonymous === true && <ClaimAccount />}
+              {isAnonymous === true && <ClaimAccount markAsClaimed={markAsClaimed} />}
             </CardFooter>
           </Card>
         </motion.div>
