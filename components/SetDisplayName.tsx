@@ -68,6 +68,7 @@ export default function SetDisplayName({
 
     const data = (await response.json()) as { ok: true; displayName: string };
     onDisplayNameChange(data.displayName);
+    localStorage.setItem("anon_display_name", data.displayName);
     setIsLoading(false);
     setIsEditing(false);
   };

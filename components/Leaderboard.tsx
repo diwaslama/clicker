@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import styles from "./Leaderboard.module.css";
 
 interface LeaderboardProps {
   city: string;
@@ -81,20 +80,63 @@ export default function Leaderboard({ city, currentUserId }: LeaderboardProps) {
   }, [city, fetchTopTen, supabase]);
 
   return (
-    <section className={styles.panel}>
-      <h2 className={styles.title}>🏆 Top 10 Brisbane</h2>
-      <ol className={styles.list}>
-        {rows.map((row, index) => (
-          <li
-            key={row.user_id}
-            className={`${styles.row} ${row.user_id === currentUserId ? styles.currentUser : ""} ${pulseByUserId[row.user_id] ? styles.pulse : ""}`}
-          >
-            <span className={styles.rank}>{index + 1}</span>
-            <span className={styles.name}>{row.display_name ?? "Anonymous"}</span>
-            <span className={styles.clicks}>{row.total_clicks.toLocaleString()}</span>
-          </li>
-        ))}
-      </ol>
-    </section>
+    <div className="border border-border bg-card flex flex-col">
+      <div className="p-8 pb-4">
+        <p className="text-[10px] font-mono uppercase tracking-[0.3em] text-muted-foreground">
+          Leaderboard
+        </p>
+        <p className="text-[10px] font-mono uppercase tracking-[0.2em] text-muted-foreground/50 mt-1">
+          Top 10 Brisbane
+        </p>
+      </div>
+
+      <div className="flex flex-col">
+        {rows.length === 0 && (
+          <div className="px-8 py-6 text-center">
+            <p className="font-mono text-xs text-muted-foreground">
+              No scores yet. Be the first.
+            </p>
+          </div>
+        )}
+        {rows.map((row, index) => {
+          const isCurrentUser = row.user_id === currentUserId;
+          const isPulsing = pulseByUserId[row.user_id] === true;
+
+          return (
+            <div
+              key={row.user_id}
+              className={`flex items-center px-8 py-3 border-t border-border relative transition-transform duration-700 ${
+                isCurrentUser ? "bg-primary/5" : ""
+              } ${isPulsing ? "scale-[1.012]" : "scale-100"}`}
+            >
+              {isCurrentUser && (
+                <div className="absolute left-0 top-0 bottom-0 w-[2px] bg-primary" />
+              )}
+              <span
+                className={`font-mono text-xs w-8 ${
+                  isCurrentUser ? "text-primary" : "text-muted-foreground/40"
+                }`}
+              >
+                {String(index + 1).padStart(2, "0")}
+              </span>
+              <span
+                className={`font-mono text-xs flex-1 ${
+                  isCurrentUser ? "text-foreground" : "text-foreground/70"
+                }`}
+              >
+                {row.display_name ?? "Anonymous"}
+              </span>
+              <span
+                className={`font-mono text-xs tabular-nums ${
+                  isCurrentUser ? "text-foreground" : "text-muted-foreground"
+                }`}
+              >
+                {row.total_clicks.toLocaleString()}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
   );
 }

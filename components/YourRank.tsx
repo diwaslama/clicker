@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import styles from "./YourRank.module.css";
 
 interface YourRankProps {
   userId: string;
@@ -36,40 +35,67 @@ export default function YourRank({ userId, city }: YourRankProps) {
   }, [city, userId]);
 
   useEffect(() => {
-    void fetchRank();
+    const timeoutId = window.setTimeout(() => {
+      void fetchRank();
+    }, 0);
 
     const intervalId = window.setInterval(() => {
       void fetchRank();
     }, REFRESH_INTERVAL_MS);
 
     return () => {
+      window.clearTimeout(timeoutId);
       window.clearInterval(intervalId);
     };
   }, [fetchRank]);
 
-  let message = "Loading rank...";
-  let messageClassName = `${styles.message} ${styles.loading}`;
+  const rank = data?.rank ?? null;
+  const isInTopTen =
+    data !== null && data.totalClicks > 0 && data.rank <= 10;
+  const nextRankPosition = data !== null ? data.rank - 1 : null;
+  const clicksToNextRank = data?.clicksToClimb ?? null;
 
+  let detailMessage = "Loading rank...";
   if (data !== null) {
-    messageClassName = styles.message;
-
     if (data.rank === 1) {
-      message = "You are #1";
+      detailMessage = "You are #1";
     } else if (data.totalClicks === 0) {
-      message = "Start clicking to join the leaderboard";
-    } else if (data.clicksToClimb !== null) {
-      const nextRank = data.rank - 1;
-      message = `${data.clicksToClimb.toLocaleString()} clicks to climb to #${nextRank}`;
+      detailMessage = "Start clicking to join the leaderboard";
+    } else if (isInTopTen) {
+      detailMessage = "You are in the top 10";
+    } else if (clicksToNextRank !== null && nextRankPosition !== null) {
+      detailMessage = `${clicksToNextRank.toLocaleString()} clicks to climb to #${nextRankPosition}`;
     } else {
-      message = "";
+      detailMessage = "Keep clicking";
     }
   }
 
   return (
-    <section className={styles.panel}>
-      <p className={styles.label}>YOUR RANK</p>
-      <p className={styles.rank}>{data === null ? "#" : `#${data.rank.toLocaleString()}`}</p>
-      <p className={messageClassName}>{message}</p>
-    </section>
+    <div className="border border-border bg-card p-8">
+      <p className="text-[10px] font-mono uppercase tracking-[0.3em] text-muted-foreground">
+        Your Rank
+      </p>
+
+      {rank !== null ? (
+        <>
+          <p className="font-mono text-4xl md:text-5xl font-light text-foreground mt-4 leading-none">
+            {"#"}
+            {rank}
+          </p>
+          <p className="font-mono text-xs text-muted-foreground mt-3">
+            {detailMessage}
+          </p>
+        </>
+      ) : (
+        <>
+          <p className="font-mono text-4xl md:text-5xl font-light text-muted-foreground/30 mt-4 leading-none">
+            --
+          </p>
+          <p className="font-mono text-xs text-muted-foreground mt-3">
+            Save your score to see your rank
+          </p>
+        </>
+      )}
+    </div>
   );
 }

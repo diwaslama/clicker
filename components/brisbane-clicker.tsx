@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect, useMemo } from "react"
 import { ClickCounter } from "@/components/click-counter"
-import { Leaderboard, type LeaderboardEntry } from "@/components/leaderboard"
+import { Leaderboard, type LeaderboardEntry } from "@/components/leaderboardNEW"
 import { RankDisplay } from "@/components/rank-display"
 import { AuthModal } from "@/components/auth-modal"
 import { UsernameEditor } from "@/components/username-editor"
