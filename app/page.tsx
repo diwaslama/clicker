@@ -1,9 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { motion } from "motion/react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import ClaimAccount from "@/components/ClaimAccount";
 import Leaderboard from "@/components/Leaderboard";
 import SetDisplayName from "@/components/SetDisplayName";
@@ -51,88 +48,76 @@ function AppContent({ city }: { city: string }) {
   };
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-slate-950 p-6 md:p-10">
-      <div className="absolute inset-0 pointer-events-none" aria-hidden>
-        <div className="absolute top-1/2 left-1/2 h-[540px] w-[920px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-to-br from-indigo-500/35 via-violet-500/25 to-purple-600/35 blur-[140px]" />
-        <div className="absolute top-16 right-10 h-[280px] w-[280px] rounded-full bg-indigo-500/20 blur-[95px]" />
-        <div className="absolute bottom-10 left-10 h-[260px] w-[260px] rounded-full bg-violet-500/20 blur-[90px]" />
+    <main className="min-h-screen bg-background relative">
+      <div
+        className="fixed inset-0 pointer-events-none"
+        aria-hidden="true"
+        style={{
+          background:
+            "radial-gradient(ellipse at 50% 0%, rgba(99, 102, 241, 0.04) 0%, transparent 60%)",
+        }}
+      />
+
+      <div className="relative z-10 max-w-5xl mx-auto px-4 py-12 md:py-20">
+        <div className="flex items-center justify-between mb-12">
+          <div className="flex items-center gap-4">
+            {isAnonymous === false && (
+              <>
+                <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+                  Set Name
+                </span>
+                <SetDisplayName
+                  userId={userId}
+                  displayName={visibleDisplayName}
+                  onDisplayNameChange={setDisplayName}
+                />
+              </>
+            )}
+          </div>
+          {isAnonymous === true && <ClaimAccount markAsClaimed={markAsClaimed} />}
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="flex flex-col items-center justify-between border border-border bg-card p-8 md:p-12 min-h-[400px]">
+            <p className="text-[10px] font-mono uppercase tracking-[0.3em] text-muted-foreground">
+              Brisbane Clicker
+            </p>
+
+            <div className="flex flex-col items-center gap-3">
+              <span className="font-mono text-7xl md:text-8xl lg:text-9xl font-light text-foreground tabular-nums leading-none">
+                {count.toLocaleString()}
+              </span>
+              <p className="font-mono text-xs text-muted-foreground">
+                {"Playing as "}
+                {visibleDisplayName ?? "Anonymous"}
+              </p>
+            </div>
+
+            <div className="flex flex-col items-center gap-4 w-full">
+              <button
+                onClick={increment}
+                className="w-full bg-primary text-primary-foreground font-mono text-sm uppercase tracking-[0.2em] py-4 rounded-[4px] hover:brightness-110 active:brightness-90 transition-all cursor-pointer"
+              >
+                Click
+              </button>
+              <button
+                onClick={handleReset}
+                className="font-mono text-xs uppercase tracking-[0.15em] text-muted-foreground hover:text-foreground transition-colors cursor-pointer bg-transparent border-none"
+              >
+                Reset
+              </button>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-6">
+            <Leaderboard city={city} currentUserId={userId} />
+            {userId !== null && !userId.startsWith("local-") && (
+              <YourRank userId={userId} city={city} />
+            )}
+          </div>
+        </div>
       </div>
-
-      <div className="relative z-10 mx-auto grid min-h-[calc(100vh-3rem)] w-full max-w-6xl grid-cols-1 items-center gap-8 lg:grid-cols-2">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, ease: "easeOut" }}
-          className="w-full"
-        >
-          <Card className="border-white/20 bg-white/[0.07] backdrop-blur-2xl shadow-2xl shadow-black/40">
-            <CardHeader className="text-center pb-2">
-              <CardTitle className="text-2xl font-bold bg-gradient-to-r from-indigo-400 via-violet-400 to-purple-400 bg-clip-text text-transparent">
-                Brisbane Clicker
-              </CardTitle>
-            </CardHeader>
-
-            <CardContent className="flex flex-col items-center gap-6">
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="h-48 w-48 rounded-full bg-gradient-to-br from-indigo-500/20 via-violet-500/15 to-purple-600/20 blur-2xl" />
-                </div>
-                <motion.div
-                  key={count}
-                  initial={{ scale: 0.5, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 15 }}
-                  className="relative flex min-h-[120px] flex-col items-center justify-center"
-                >
-                  <span className="text-6xl font-bold tabular-nums bg-gradient-to-b from-white to-slate-300 bg-clip-text text-transparent drop-shadow-lg">
-                    {count}
-                  </span>
-                  <span className="mt-2 text-xs tracking-wide text-slate-400">
-                    Playing as {visibleDisplayName ?? "Anonymous"}
-                  </span>
-                  {isAnonymous === false && (
-                    <SetDisplayName
-                      userId={userId}
-                      displayName={visibleDisplayName}
-                      onDisplayNameChange={setDisplayName}
-                    />
-                  )}
-                </motion.div>
-              </div>
-
-              <div className="flex justify-center">
-                <motion.div whileTap={{ scale: 0.92 }} whileHover={{ scale: 1.02 }}>
-                  <Button onClick={increment} size="lg" className="min-w-[140px]">
-                    Increment
-                  </Button>
-                </motion.div>
-              </div>
-            </CardContent>
-
-            <CardFooter className="flex-col justify-center gap-3 pt-2 pb-6">
-              <motion.div whileTap={{ scale: 0.92 }} whileHover={{ scale: 1.02 }}>
-                <Button onClick={handleReset} variant="destructive" size="lg">
-                  Reset
-                </Button>
-              </motion.div>
-              {isAnonymous === true && <ClaimAccount markAsClaimed={markAsClaimed} />}
-            </CardFooter>
-          </Card>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.05, ease: "easeOut" }}
-          className="w-full"
-        >
-          <Leaderboard city={city} currentUserId={userId} />
-          {userId !== null && !userId.startsWith("local-") && (
-            <YourRank userId={userId} city={city} />
-          )}
-        </motion.div>
-      </div>
-    </div>
+    </main>
   );
 }
 
