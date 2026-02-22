@@ -54,6 +54,12 @@ export default function SetDisplayName({
       body: JSON.stringify({ userId, displayName: trimmed }),
     });
 
+    if (response.status === 409) {
+      setError("That name is already taken, try another");
+      setIsLoading(false);
+      return;
+    }
+
     if (!response.ok) {
       setError("Could not update name.");
       setIsLoading(false);

@@ -1,19 +1,25 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "motion/react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import ClaimAccount from "@/components/ClaimAccount";
 import Leaderboard from "@/components/Leaderboard";
 import SetDisplayName from "@/components/SetDisplayName";
+import YourRank from "@/components/YourRank";
 import { useAnonymousSession } from "@/hooks/useAnonymousSession";
 import { registerClick } from "@/lib/clickBatcher";
 import { useSyncCounter } from "@/hooks/useSyncCounter";
 
-export default function Home() {
+interface LocationResponse {
+  allowed: boolean;
+  city: string | null;
+}
+
+function AppContent({ city }: { city: string }) {
   const { userId, displayName: hookDisplayName, isAnonymous, isLoading, markAsClaimed } = useAnonymousSession({
-    city: "Brisbane",
+    city,
   });
   // EXISTING CODE
   const { count, updateCount, reset } = useSyncCounter();
@@ -29,6 +35,18 @@ export default function Home() {
     updateCount(count + 1);
     if (userId !== null && !userId.startsWith("local-")) {
       registerClick(userId);
+    }
+  };
+
+  const handleReset = () => {
+    reset();
+
+    if (userId !== null && !userId.startsWith("local-")) {
+      void fetch("/api/session/reset", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId }),
+      });
     }
   };
 
@@ -93,7 +111,7 @@ export default function Home() {
 
             <CardFooter className="flex-col justify-center gap-3 pt-2 pb-6">
               <motion.div whileTap={{ scale: 0.92 }} whileHover={{ scale: 1.02 }}>
-                <Button onClick={reset} variant="destructive" size="lg">
+                <Button onClick={handleReset} variant="destructive" size="lg">
                   Reset
                 </Button>
               </motion.div>
@@ -108,9 +126,70 @@ export default function Home() {
           transition={{ duration: 0.5, delay: 0.05, ease: "easeOut" }}
           className="w-full"
         >
-          <Leaderboard city="Brisbane" currentUserId={userId} />
+          <Leaderboard city={city} currentUserId={userId} />
+          {userId !== null && !userId.startsWith("local-") && (
+            <YourRank userId={userId} city={city} />
+          )}
         </motion.div>
       </div>
     </div>
   );
+}
+
+export default function Home() {
+  const [isLocationLoading, setIsLocationLoading] = useState(true);
+  const [isAllowed, setIsAllowed] = useState(false);
+  const [city, setCity] = useState<string | null>(null);
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    const checkLocation = async () => {
+      try {
+        const response = await fetch("/api/location");
+        const data = (await response.json()) as LocationResponse;
+
+        if (isCancelled) {
+          return;
+        }
+
+        setIsAllowed(data.allowed === true);
+        setCity(data.allowed === true ? data.city ?? "Brisbane" : null);
+      } catch {
+        if (isCancelled) {
+          return;
+        }
+
+        setIsAllowed(false);
+        setCity(null);
+      } finally {
+        if (!isCancelled) {
+          setIsLocationLoading(false);
+        }
+      }
+    };
+
+    void checkLocation();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, []);
+
+  if (isLocationLoading) {
+    return <div className="min-h-screen bg-slate-950" />;
+  }
+
+  if (!isAllowed) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6">
+        <div className="text-center">
+          <p className="text-2xl text-slate-100">🌏 Brisbane Clicker is only available in Queensland, Australia</p>
+          <p className="mt-3 text-sm text-slate-400">Come visit us sometime 👋</p>
+        </div>
+      </div>
+    );
+  }
+
+  return <AppContent city={city ?? "Brisbane"} />;
 }

@@ -44,6 +44,24 @@ export async function POST(request: Request) {
   }
 
   const supabase = createAdminClient();
+  const { data: existingUser, error: existingUserError } = await supabase
+    .from("users")
+    .select("id")
+    .ilike("display_name", normalizedDisplayName)
+    .single();
+
+  if (existingUserError && existingUserError.code !== "PGRST116") {
+    console.error("Failed to check display name uniqueness:", existingUserError);
+    return NextResponse.json({ error: "Failed to rename session" }, { status: 500 });
+  }
+
+  if (existingUser && existingUser.id !== body.userId) {
+    return NextResponse.json(
+      { error: "That name is already taken" },
+      { status: 409 }
+    );
+  }
+
   const { error } = await supabase
     .from("users")
     .update({ display_name: normalizedDisplayName })
