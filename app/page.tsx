@@ -116,9 +116,11 @@ function AppContent({ city }: { city: string }) {
                 />
               </>
             )}
-            <DeleteAccount userId={userId} />
           </div>
-          {isAnonymous === true && <ClaimAccount markAsClaimed={markAsClaimed} />}
+          <div className="ml-auto flex items-center gap-4">
+            {isAnonymous === false && <DeleteAccount userId={userId} />}
+            {isAnonymous === true && <ClaimAccount markAsClaimed={markAsClaimed} />}
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
