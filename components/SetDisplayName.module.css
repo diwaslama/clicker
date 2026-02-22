@@ -1,0 +1,67 @@
+.inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.currentName {
+  font-size: 0.78rem;
+  color: #cbd5e1;
+}
+
+.iconButton {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  color: #e2e8f0;
+  border-radius: 8px;
+  height: 24px;
+  min-width: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.editor {
+  margin-top: 6px;
+  width: 100%;
+  max-width: 260px;
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.input {
+  flex: 1;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 9px;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(10px);
+  color: #f8fafc;
+  font-size: 0.82rem;
+  padding: 7px 10px;
+}
+
+.confirmButton {
+  border: 1px solid rgba(167, 139, 250, 0.45);
+  background: rgba(79, 70, 229, 0.25);
+  color: #eef2ff;
+  border-radius: 9px;
+  padding: 6px 9px;
+  cursor: pointer;
+}
+
+.confirmButton:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.error {
+  margin: 5px 0 0;
+  font-size: 0.74rem;
+  color: #fda4af;
+}

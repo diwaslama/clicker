@@ -1,145 +1,227 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { motion } from "motion/react";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { useEffect, useRef, useState } from "react";
+import ClaimAccount from "@/components/ClaimAccount";
+import DeleteAccount from "@/components/DeleteAccount";
+import Leaderboard from "@/components/Leaderboard";
+import SetDisplayName from "@/components/SetDisplayName";
+import YourRank from "@/components/YourRank";
+import { useAnonymousSession } from "@/hooks/useAnonymousSession";
+import { registerClick } from "@/lib/clickBatcher";
+import { useSyncCounter } from "@/hooks/useSyncCounter";
 
-const STORAGE_KEY = "clickerCount";
+interface LocationResponse {
+  allowed: boolean;
+  city: string | null;
+}
 
-export default function Home() {
-  const [count, setCount] = useState(0);
-  const [clone, makeClone] = useState(0);
-  const isInitialMount = useRef(true);
+interface RankSeedResponse {
+  totalClicks: number;
+}
 
-  // Load saved count from localStorage on mount
-  useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved !== null) {
-      const parsed = parseInt(saved, 10);
-      if (!Number.isNaN(parsed)) {
-        setCount(parsed);
-      }
+function AppContent({ city }: { city: string }) {
+  const { userId, displayName: hookDisplayName, isAnonymous, isLoading, markAsClaimed } = useAnonymousSession({
+    city,
+  });
+  // EXISTING CODE
+  const { count, updateCount, reset } = useSyncCounter();
+  const [displayName, setDisplayName] = useState<string | null>(hookDisplayName);
+  const visibleDisplayName = displayName ?? hookDisplayName;
+  const hasSeededInitialCountRef = useRef(false);
+
+  if (isLoading) {
+    // render no additional UI while session bootstrap is in progress
+  }
+
+  const increment = () => {
+    // EXISTING CODE
+    updateCount(count + 1);
+    if (userId !== null && !userId.startsWith("local-")) {
+      registerClick(userId);
     }
-  }, []);
+  };
 
-  // Save count to localStorage when it changes (skip initial mount)
+  const handleReset = () => {
+    reset();
+
+    if (userId !== null && !userId.startsWith("local-")) {
+      void fetch("/api/session/reset", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId }),
+      });
+    }
+  };
+
   useEffect(() => {
-    if (isInitialMount.current) {
-      isInitialMount.current = false;
+    if (hasSeededInitialCountRef.current || isLoading) {
       return;
     }
-    localStorage.setItem(STORAGE_KEY, String(count));
-  }, [count]);
 
-  const increment = () => setCount(count + 1);
-  const decrement = () => setCount(count - 1);
-  const reset = () => {
-    setCount(0);
-    localStorage.removeItem(STORAGE_KEY);
-  };
-  const cloner = () => makeClone(count);
+    if (userId === null || userId.startsWith("local-")) {
+      hasSeededInitialCountRef.current = true;
+      return;
+    }
+
+    hasSeededInitialCountRef.current = true;
+    let isCancelled = false;
+
+    const seedInitialCountFromDb = async () => {
+      try {
+        const params = new URLSearchParams({ userId, city });
+        const response = await fetch(`/api/rank?${params.toString()}`);
+        if (!response.ok || isCancelled) {
+          return;
+        }
+
+        const data = (await response.json()) as RankSeedResponse;
+        if (typeof data.totalClicks === "number" && Number.isFinite(data.totalClicks)) {
+          updateCount(Math.max(0, Math.trunc(data.totalClicks)));
+        }
+      } catch {
+        // Keep local counter value if rank fetch fails.
+      }
+    };
+
+    void seedInitialCountFromDb();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [city, isLoading, updateCount, userId]);
 
   return (
-    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6">
-      {/* Mesh gradient glow behind the counter */}
+    <main className="min-h-screen bg-background relative">
       <div
-        className="absolute inset-0 overflow-hidden pointer-events-none"
-        aria-hidden
-      >
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] rounded-full bg-gradient-to-br from-indigo-500/40 via-violet-500/30 to-purple-600/40 blur-[120px] opacity-60" />
-        <div className="absolute top-1/3 right-1/4 w-[300px] h-[300px] rounded-full bg-violet-500/20 blur-[80px]" />
-        <div className="absolute bottom-1/3 left-1/4 w-[250px] h-[250px] rounded-full bg-indigo-500/20 blur-[70px]" />
-      </div>
+        className="fixed inset-0 pointer-events-none"
+        aria-hidden="true"
+        style={{
+          background:
+            "radial-gradient(ellipse at 50% 0%, rgba(99, 102, 241, 0.04) 0%, transparent 60%)",
+        }}
+      />
 
-      {/* Glassmorphism card container */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, ease: "easeOut" }}
-        className="relative z-10 w-full max-w-md"
-      >
-        <Card className="border-white/20 bg-white/[0.07] backdrop-blur-2xl shadow-2xl shadow-black/40">
-          <CardHeader className="text-center pb-2">
-            <CardTitle className="text-2xl font-bold bg-gradient-to-r from-indigo-400 via-violet-400 to-purple-400 bg-clip-text text-transparent">
-              I am clicker
-            </CardTitle>
-            <CardDescription className="text-slate-400">
-              Tap to count, clone to multiply
-            </CardDescription>
-          </CardHeader>
-
-          <CardContent className="flex flex-col items-center gap-6">
-            {/* Counter display with mesh glow and spring bounce */}
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-48 h-48 rounded-full bg-gradient-to-br from-indigo-500/20 via-violet-500/15 to-purple-600/20 blur-2xl" />
-              </div>
-              <motion.div
-                key={count}
-                initial={{ scale: 0.5, opacity: 0 }}
-                animate={{
-                  scale: 1,
-                  opacity: 1,
-                }}
-                transition={{
-                  type: "spring",
-                  stiffness: 400,
-                  damping: 15,
-                }}
-                className="relative flex flex-col items-center justify-center min-h-[120px]"
-              >
-                <span className="text-6xl font-bold tabular-nums bg-gradient-to-b from-white to-slate-300 bg-clip-text text-transparent drop-shadow-lg">
-                  {count}
+      <div className="relative z-10 max-w-5xl mx-auto px-4 py-12 md:py-20">
+        <div className="flex items-center justify-between mb-12">
+          <div className="flex items-center gap-4">
+            {isAnonymous === false && (
+              <>
+                <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+                  Set Name
                 </span>
-                {clone !== 0 && (
-                  <motion.span
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="mt-2 text-2xl font-mono text-violet-400/90"
-                  >
-                    {clone}
-                  </motion.span>
-                )}
-              </motion.div>
+                <SetDisplayName
+                  userId={userId}
+                  displayName={visibleDisplayName}
+                  onDisplayNameChange={setDisplayName}
+                />
+              </>
+            )}
+          </div>
+          <div className="ml-auto flex items-center gap-4">
+            {isAnonymous === false && <DeleteAccount userId={userId} />}
+            {isAnonymous === true && <ClaimAccount markAsClaimed={markAsClaimed} />}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="flex flex-col gap-6">
+            <div className="flex flex-col items-center justify-between border border-border bg-card p-8 md:p-12 min-h-[400px]">
+              <p className="text-[10px] font-mono uppercase tracking-[0.3em] text-muted-foreground">
+                Brisbane Clicker
+              </p>
+
+              <div className="flex flex-col items-center gap-3">
+                <span className="font-mono text-7xl md:text-8xl lg:text-9xl font-light text-foreground tabular-nums leading-none">
+                  {count.toLocaleString()}
+                </span>
+                <p className="font-mono text-xs text-muted-foreground">
+                  {"Playing as "}
+                  {visibleDisplayName ?? "Anonymous"}
+                </p>
+              </div>
+
+              <div className="flex flex-col items-center gap-4 w-full">
+                <button
+                  onClick={increment}
+                  className="w-full bg-primary text-primary-foreground font-mono text-sm uppercase tracking-[0.2em] py-4 rounded-[4px] hover:brightness-110 active:brightness-90 transition-all cursor-pointer"
+                >
+                  Click
+                </button>
+                <button
+                  onClick={handleReset}
+                  className="font-mono text-xs uppercase tracking-[0.15em] text-muted-foreground hover:text-foreground transition-colors cursor-pointer bg-transparent border-none"
+                >
+                  Reset
+                </button>
+              </div>
             </div>
 
-            {/* Action buttons with scale-down on click */}
-            <div className="flex flex-wrap gap-3 justify-center">
-              <motion.div whileTap={{ scale: 0.92 }} whileHover={{ scale: 1.02 }}>
-                <Button onClick={increment} size="lg" className="min-w-[120px]">
-                  Increment
-                </Button>
-              </motion.div>
-              <motion.div whileTap={{ scale: 0.92 }} whileHover={{ scale: 1.02 }}>
-                <Button onClick={decrement} variant="outline" size="lg" className="min-w-[120px]">
-                  Decrement
-                </Button>
-              </motion.div>
-              <motion.div whileTap={{ scale: 0.92 }} whileHover={{ scale: 1.02 }}>
-                <Button onClick={cloner} variant="secondary" size="lg" className="min-w-[120px]">
-                  Clone
-                </Button>
-              </motion.div>
-            </div>
-          </CardContent>
+            {userId !== null && !userId.startsWith("local-") && (
+              <YourRank userId={userId} city={city} />
+            )}
+          </div>
 
-          <CardFooter className="justify-center pt-2 pb-6">
-            <motion.div whileTap={{ scale: 0.92 }} whileHover={{ scale: 1.02 }}>
-              <Button onClick={reset} variant="destructive" size="lg">
-                Reset
-              </Button>
-            </motion.div>
-          </CardFooter>
-        </Card>
-      </motion.div>
-    </div>
+          <Leaderboard city={city} currentUserId={userId} />
+        </div>
+      </div>
+    </main>
   );
+}
+
+export default function Home() {
+  const [isLocationLoading, setIsLocationLoading] = useState(true);
+  const [isAllowed, setIsAllowed] = useState(false);
+  const [city, setCity] = useState<string | null>(null);
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    const checkLocation = async () => {
+      try {
+        const response = await fetch("/api/location");
+        const data = (await response.json()) as LocationResponse;
+
+        if (isCancelled) {
+          return;
+        }
+
+        setIsAllowed(data.allowed === true);
+        setCity(data.allowed === true ? data.city ?? "Brisbane" : null);
+      } catch {
+        if (isCancelled) {
+          return;
+        }
+
+        setIsAllowed(false);
+        setCity(null);
+      } finally {
+        if (!isCancelled) {
+          setIsLocationLoading(false);
+        }
+      }
+    };
+
+    void checkLocation();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, []);
+
+  if (isLocationLoading) {
+    return <div className="min-h-screen bg-slate-950" />;
+  }
+
+  if (!isAllowed) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6">
+        <div className="text-center">
+          <p className="text-2xl text-slate-100">🌏 Brisbane Clicker is only available in Queensland, Australia</p>
+          <p className="mt-3 text-sm text-slate-400">Come visit us sometime 👋</p>
+        </div>
+      </div>
+    );
+  }
+
+  return <AppContent city={city ?? "Brisbane"} />;
 }
