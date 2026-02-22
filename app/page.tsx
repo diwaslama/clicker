@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import ClaimAccount from "@/components/ClaimAccount";
 import DeleteAccount from "@/components/DeleteAccount";
 import Leaderboard from "@/components/Leaderboard";
@@ -15,6 +15,10 @@ interface LocationResponse {
   city: string | null;
 }
 
+interface RankSeedResponse {
+  totalClicks: number;
+}
+
 function AppContent({ city }: { city: string }) {
   const { userId, displayName: hookDisplayName, isAnonymous, isLoading, markAsClaimed } = useAnonymousSession({
     city,
@@ -23,6 +27,7 @@ function AppContent({ city }: { city: string }) {
   const { count, updateCount, reset } = useSyncCounter();
   const [displayName, setDisplayName] = useState<string | null>(hookDisplayName);
   const visibleDisplayName = displayName ?? hookDisplayName;
+  const hasSeededInitialCountRef = useRef(false);
 
   if (isLoading) {
     // render no additional UI while session bootstrap is in progress
@@ -47,6 +52,43 @@ function AppContent({ city }: { city: string }) {
       });
     }
   };
+
+  useEffect(() => {
+    if (hasSeededInitialCountRef.current || isLoading) {
+      return;
+    }
+
+    if (userId === null || userId.startsWith("local-")) {
+      hasSeededInitialCountRef.current = true;
+      return;
+    }
+
+    hasSeededInitialCountRef.current = true;
+    let isCancelled = false;
+
+    const seedInitialCountFromDb = async () => {
+      try {
+        const params = new URLSearchParams({ userId, city });
+        const response = await fetch(`/api/rank?${params.toString()}`);
+        if (!response.ok || isCancelled) {
+          return;
+        }
+
+        const data = (await response.json()) as RankSeedResponse;
+        if (typeof data.totalClicks === "number" && Number.isFinite(data.totalClicks)) {
+          updateCount(Math.max(0, Math.trunc(data.totalClicks)));
+        }
+      } catch {
+        // Keep local counter value if rank fetch fails.
+      }
+    };
+
+    void seedInitialCountFromDb();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [city, isLoading, updateCount, userId]);
 
   return (
     <main className="min-h-screen bg-background relative">
