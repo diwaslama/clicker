@@ -1,11 +1,41 @@
 "use client"
 
-import { useState, useCallback, useEffect, useMemo } from "react"
+import { useState, useCallback, useEffect, useMemo, type ComponentType } from "react"
 import { ClickCounter } from "@/components/click-counter"
-import { Leaderboard, type LeaderboardEntry } from "@/components/leaderboardNEW"
-import { RankDisplay } from "@/components/rank-display"
-import { AuthModal } from "@/components/auth-modal"
-import { UsernameEditor } from "@/components/username-editor"
+import LeaderboardComponent from "@/components/Leaderboard"
+import YourRankComponent from "@/components/YourRank"
+import ClaimAccountComponent from "@/components/ClaimAccount"
+import SetDisplayNameComponent from "@/components/SetDisplayName"
+
+type LeaderboardEntry = {
+  id: string
+  name: string
+  clicks: number
+}
+
+const Leaderboard = LeaderboardComponent as unknown as ComponentType<{
+  entries: LeaderboardEntry[]
+  currentUserId: string | null
+}>
+
+const RankDisplay = YourRankComponent as unknown as ComponentType<{
+  rank: number | null
+  clicksToNextRank: number | null
+  nextRankPosition: number | null
+  isInTopTen: boolean
+}>
+
+const AuthModal = ClaimAccountComponent as unknown as ComponentType<{
+  isOpen: boolean
+  onClose: () => void
+  onSave: (email: string, password: string) => void
+  error: string | null
+}>
+
+const UsernameEditor = SetDisplayNameComponent as unknown as ComponentType<{
+  username: string
+  onSave: (newName: string) => void
+}>
 
 const STORAGE_KEYS = {
   clicks: "brisbane-clicks",
