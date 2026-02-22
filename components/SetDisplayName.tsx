@@ -1,7 +1,6 @@
 "use client";
 
-import { KeyboardEvent, useState } from "react";
-import styles from "./SetDisplayName.module.css";
+import { KeyboardEvent, useEffect, useRef, useState } from "react";
 
 interface SetDisplayNameProps {
   userId: string | null;
@@ -18,8 +17,16 @@ export default function SetDisplayName({
   const [draftName, setDraftName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const currentName = displayName ?? "Anonymous";
+
+  useEffect(() => {
+    if (isEditing && inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select();
+    }
+  }, [isEditing]);
 
   const startEdit = () => {
     setDraftName(currentName);
@@ -55,7 +62,7 @@ export default function SetDisplayName({
     });
 
     if (response.status === 409) {
-      setError("That name is already taken, try another");
+      setError("That name is already taken");
       setIsLoading(false);
       return;
     }
@@ -87,31 +94,41 @@ export default function SetDisplayName({
 
   if (!isEditing) {
     return (
-      <div className={styles.inline}>
-        <span className={styles.currentName}>{currentName}</span>
-        <button type="button" className={styles.iconButton} onClick={startEdit} aria-label="Edit name">
-          ✏️
-        </button>
-      </div>
+      <button
+        type="button"
+        onClick={startEdit}
+        className="font-mono text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer bg-transparent border-none underline underline-offset-4 decoration-border"
+      >
+        {currentName}
+      </button>
     );
   }
 
   return (
-    <div className={styles.editor}>
-      <div className={styles.controls}>
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center gap-2">
+        <label htmlFor="display-name-input" className="sr-only">
+          Set display name
+        </label>
         <input
+          ref={inputRef}
+          id="display-name-input"
           value={draftName}
           onChange={(event) => setDraftName(event.target.value)}
           onKeyDown={onKeyDown}
           maxLength={20}
-          className={styles.input}
-          autoFocus
+          className="bg-transparent border border-border px-3 py-1 font-mono text-xs text-foreground outline-none focus:border-primary transition-colors w-36"
         />
-        <button type="button" className={styles.confirmButton} onClick={() => void submit()} disabled={isLoading}>
-          ✅
+        <button
+          type="button"
+          onClick={() => void submit()}
+          disabled={isLoading}
+          className="bg-primary text-primary-foreground font-mono text-[10px] uppercase tracking-[0.2em] px-3 py-1 rounded-[4px] hover:brightness-110 active:brightness-90 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+        >
+          {isLoading ? "Saving..." : "Save"}
         </button>
       </div>
-      {error && <p className={styles.error}>{error}</p>}
+      {error && <p className="font-mono text-[10px] text-destructive">{error}</p>}
     </div>
   );
 }

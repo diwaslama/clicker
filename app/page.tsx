@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import ClaimAccount from "@/components/ClaimAccount";
+import DeleteAccount from "@/components/DeleteAccount";
 import Leaderboard from "@/components/Leaderboard";
 import SetDisplayName from "@/components/SetDisplayName";
 import YourRank from "@/components/YourRank";
@@ -73,6 +74,7 @@ function AppContent({ city }: { city: string }) {
                 />
               </>
             )}
+            <DeleteAccount userId={userId} />
           </div>
           {isAnonymous === true && <ClaimAccount markAsClaimed={markAsClaimed} />}
         </div>
