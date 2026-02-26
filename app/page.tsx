@@ -156,9 +156,15 @@ function AppContent({ city }: { city: string }) {
               </div>
             </div>
 
-            {userId !== null && !userId.startsWith("local-") && (
-              <YourRank userId={userId} city={city} />
-            )}
+            {userId !== null &&
+              !userId.startsWith("local-") &&
+              (isAnonymous === true ? (
+                <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+                  Save your score to view your rank
+                </p>
+              ) : isAnonymous === false ? (
+                <YourRank userId={userId} city={city} />
+              ) : null)}
           </div>
 
           <Leaderboard city={city} currentUserId={userId} />
