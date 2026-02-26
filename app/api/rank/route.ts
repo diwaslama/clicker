@@ -39,10 +39,11 @@ export async function GET(request: Request) {
   const totalClicks = currentUserRow?.total_clicks ?? 0;
 
   const { count: higherCount, error: higherCountError } = await supabase
-    .from("leaderboard")
-    .select("*", { count: "exact", head: true })
+    .from("users")
+    .select("id, clicks!inner(total_clicks)", { count: "exact", head: true })
     .eq("city", city)
-    .gt("total_clicks", totalClicks);
+    .eq("is_anonymous", false)
+    .gt("clicks.total_clicks", totalClicks);
 
   if (higherCountError) {
     console.error("Failed to fetch users ahead count:", higherCountError);

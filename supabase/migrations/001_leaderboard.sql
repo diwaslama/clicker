@@ -45,6 +45,7 @@ SELECT
   clicks.total_clicks
 FROM users
 JOIN clicks ON clicks.user_id = users.id
+WHERE users.is_anonymous = false
 ORDER BY clicks.total_clicks DESC;
 
 -- Row Level Security
