@@ -95,7 +95,7 @@ export default function ClaimAccount({ markAsClaimed }: ClaimAccountProps) {
           aria-label="Save your score"
         >
           <div
-            className="bg-[#0a0a0a] border border-[rgba(255,255,255,0.08)] rounded-[4px] w-full max-w-sm mx-4 p-8"
+            className="bg-[#0a0a0a] text-[#e5e5e5] border border-[rgba(255,255,255,0.08)] rounded-[4px] w-full max-w-sm mx-4 p-8"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Title */}
@@ -119,7 +119,7 @@ export default function ClaimAccount({ markAsClaimed }: ClaimAccountProps) {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   autoFocus
-                  className="w-full bg-[#0f0f0f] border border-[rgba(255,255,255,0.15)] rounded-[4px] px-4 py-3 font-mono text-xs text-foreground placeholder:text-[#525252] outline-none focus:border-[#6366f1] transition-colors duration-200"
+                  className="w-full bg-[#0f0f0f] border border-[rgba(255,255,255,0.15)] rounded-[4px] px-4 py-3 font-mono text-xs text-[#f5f5f5] caret-[#f5f5f5] placeholder:text-[#737373] outline-none focus:border-[#6366f1] transition-colors duration-200"
                   placeholder="you@example.com"
                 />
               </div>
@@ -138,7 +138,7 @@ export default function ClaimAccount({ markAsClaimed }: ClaimAccountProps) {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="w-full bg-[#0f0f0f] border border-[rgba(255,255,255,0.15)] rounded-[4px] px-4 py-3 font-mono text-xs text-foreground placeholder:text-[#525252] outline-none focus:border-[#6366f1] transition-colors duration-200"
+                  className="w-full bg-[#0f0f0f] border border-[rgba(255,255,255,0.15)] rounded-[4px] px-4 py-3 font-mono text-xs text-[#f5f5f5] caret-[#f5f5f5] placeholder:text-[#737373] outline-none focus:border-[#6366f1] transition-colors duration-200"
                   placeholder="Min 6 characters"
                 />
               </div>
