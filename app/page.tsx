@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import ClaimAccount from "@/components/ClaimAccount";
 import DeleteAccount from "@/components/DeleteAccount";
@@ -118,6 +119,12 @@ function AppContent({ city }: { city: string }) {
             )}
           </div>
           <div className="ml-auto flex items-center gap-4">
+            <Link
+              href="/challenges"
+              className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Challenges
+            </Link>
             {isAnonymous === false && <DeleteAccount userId={userId} />}
             {isAnonymous === true && <ClaimAccount markAsClaimed={markAsClaimed} />}
           </div>
